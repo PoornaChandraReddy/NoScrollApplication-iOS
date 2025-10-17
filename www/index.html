@@ -1,0 +1,832 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>NoScroll App</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <link rel="stylesheet" href="https://rsms.me/inter/inter.css" />
+  <style>
+    :root {
+      --primary-blue: #3b82f6;
+      --secondary-blue: #2563eb;
+      --accent-green: #10b981;
+      --light-gray: #f8fafc;
+      --text-gray: #4b5563;
+      --dark-gray: #1f2937;
+    }
+    body {
+      font-family: 'Inter', sans-serif;
+      background: linear-gradient(135deg, #c3e0ff, #e3f2ff);
+      animation: background-gradient 10s ease infinite;
+      background-size: 200% 200%;
+    }
+    .container {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      padding: 1.5rem;
+    }
+    .card {
+      width: 100%;
+      max-width: 450px;
+      background-color: white;
+      padding: 2.5rem;
+      border-radius: 1.5rem;
+      box-shadow: 0 10px 30px -5px rgba(0, 0, 0, 0.15), 0 4px 10px -2px rgba(0, 0, 0, 0.08);
+      transform: scale(1);
+      transition: transform 0.3s ease-in-out;
+    }
+    .card:hover {
+      transform: scale(1.02);
+    }
+    .form-input {
+      width: 100%;
+      padding: 0.75rem;
+      border-radius: 0.75rem;
+      border: 1px solid #e2e8f0;
+      background-color: var(--light-gray);
+      margin-top: 0.5rem;
+      transition: all 0.2s ease-in-out;
+    }
+    .form-input:focus {
+      border-color: var(--primary-blue);
+      box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.25);
+      outline: none;
+    }
+    .btn {
+      padding: 0.75rem 1.5rem;
+      border-radius: 0.75rem;
+      font-weight: 600;
+      transition: all 0.2s ease-in-out;
+    }
+    .btn:hover {
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+      transform: translateY(-2px);
+    }
+    .btn-primary {
+      background-color: var(--primary-blue);
+      color: white;
+      box-shadow: 0 4px 6px rgba(59, 130, 246, 0.2);
+    }
+    .btn-primary:hover {
+      background-color: var(--secondary-blue);
+    }
+    .btn-danger {
+      background-color: #ef4444;
+      color: white;
+      box-shadow: 0 4px 6px rgba(239, 68, 68, 0.2);
+    }
+    .btn-danger:hover {
+      background-color: #dc2626;
+    }
+    .message-box {
+      position: fixed;
+      top: 1rem;
+      left: 50%;
+      transform: translateX(-50%);
+      padding: 0.75rem 1.5rem;
+      border-radius: 0.75rem;
+      opacity: 0;
+      transition: opacity 0.5s ease-in-out;
+      z-index: 100;
+      text-align: center;
+    }
+    .message-box.show {
+      opacity: 1;
+    }
+    .message-box.success {
+      background-color: #d1fae5;
+      color: #065f46;
+    }
+    .message-box.error {
+      background-color: #fee2e2;
+      color: #991b1b;
+    }
+    .hidden {
+      display: none !important;
+    }
+    .overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(255, 255, 255, 0.8);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      z-index: 99;
+    }
+    .loader {
+      border: 4px solid #f3f3f3;
+      border-top: 4px solid var(--primary-blue);
+      border-radius: 50%;
+      width: 40px;
+      height: 40px;
+      animation: spin 1s linear infinite;
+    }
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+    @keyframes background-gradient {
+      0% { background-position: 0% 50%; }
+      50% { background-position: 100% 50%; }
+      100% { background-position: 0% 50%; }
+    }
+  </style>
+</head>
+<body class="bg-gray-100 flex items-center justify-center min-h-screen">
+  <div class="container">
+  
+    <div id="message-box" class="message-box"></div>
+
+    <div id="loading-overlay" class="overlay hidden">
+      <div class="loader"></div>
+    </div>
+
+    <div id="setup-card" class="card space-y-6">
+      <div class="flex flex-col items-center space-y-2">
+        <span class="text-5xl">🚀</span>
+        <h1 class="text-3xl font-extrabold text-gray-900 text-center">Setup Your NoScroll Profile</h1>
+        <p class="text-center text-gray-500 text-sm">Let's get you set up to manage your screen time.</p>
+      </div>
+      <form id="setup-form" class="space-y-4" action="javascript:void(0);">
+        <div>
+          <label for="customerName" class="block text-sm font-medium text-gray-700">Your Name</label>
+          <input type="text" id="customerName" name="customerName" class="form-input" required />
+        </div>
+        <div>
+          <label for="email" class="block text-sm font-medium text-gray-700">Your Email</label>
+          <input type="email" id="email" name="email" class="form-input" required />
+        </div>
+        <!--<div>
+          <label for="socialMediaApp" class="block text-sm font-medium text-gray-700">Social Media App</label>
+          <input type="text" id="socialMediaApp" name="socialMediaApp" class="form-input" placeholder="e.g., TikTok" required />
+        </div>-->
+        <div class="flex items-center space-x-6">
+          <label class="flex items-center">
+            <input type="radio" name="userType" value="Parent" class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded-full" />
+            <span class="ml-2 text-sm font-medium text-gray-700">Parent</span>
+          </label>
+          <label class="flex items-center">
+            <input type="radio" name="userType" value="Individual" class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded-full" checked />
+            <span class="ml-2 text-sm font-medium text-gray-700">Individual</span>
+          </label>
+        </div>
+        <div id="parent-fields" class="space-y-4 hidden">
+          <div>
+            <label for="childName" class="block text-sm font-medium text-gray-700">Child's Name</label>
+            <input type="text" id="childName" name="childName" class="form-input" />
+          </div>
+          <div>
+            <label for="childEmail" class="block text-sm font-medium text-gray-700">Child's Email</label>
+            <input type="email" id="childEmail" name="childEmail" class="form-input" />
+          </div>
+        </div>
+        <div>
+          <label for="age" class="block text-sm font-medium text-gray-700">Age</label>
+          <input type="number" id="age" name="age" class="form-input" required />
+        </div>
+        <button type="submit" class="btn btn-primary w-full shadow-lg">
+          Save Profile
+        </button>
+      </form>
+    </div>
+
+    <div id="time-limit-card" class="card space-y-6 hidden">
+      <div class="flex flex-col items-center space-y-2">
+        <span class="text-5xl">⏱️</span>
+        <h1 class="text-3xl font-extrabold text-gray-900 text-center">Set Your Time Limit</h1>
+        <p class="text-center text-gray-500 text-sm">Enter a daily time limit in minutes for your session.</p>
+      </div>
+
+      <button id="pull-summary-btn-set" class="pull-summary-btn btn btn-primary w-full shadow-lg">
+        📊 Pull Last 3 Days Summary
+      </button>
+	  <div class="space-y-4">
+    <div>
+      <label for="socialApp" class="block text-sm font-medium text-gray-700">Select App</label>
+      <select id="socialApp" name="socialApp" class="form-select w-full">
+        <option value="Instagram" selected>Instagram</option>
+        <option value="Facebook">Facebook</option>
+        <option value="YouTube">YouTube</option>
+      </select>
+    </div>
+	  
+      
+        <div>
+          <label for="timeLimit" class="block text-sm font-medium text-gray-700">Time Limit (minutes)</label>
+          <input type="number" id="timeLimit" name="timeLimit" class="form-input" value="60" min="1" required />
+        </div>
+        <button id="start-session-btn" class="btn btn-primary w-full shadow-lg">
+          Start Session
+        </button>
+      </div>
+    </div>
+
+
+ 
+    <template id="summary-template">
+      <div class="summary-card card mt-4 relative">
+        <button class="close-summary absolute top-2 right-2 text-gray-500 hover:text-red-600">❌</button>
+        <h2 class="text-lg font-bold text-gray-800 mb-2">Last 3 Days Usage</h2>
+        <canvas class="summary-chart" width="400" height="200"></canvas>
+      </div>
+    </template>
+
+
+    <div id="tracker-card" class="card space-y-6 text-center hidden">
+      <div class="flex flex-col items-center space-y-2">
+        <span class="text-5xl">⏳</span>
+        <h1 class="text-3xl font-extrabold text-gray-900">Session Tracker</h1>
+        <p class="text-lg text-gray-500">Time Spent:</p>
+      </div>
+      <div class="text-7xl font-extrabold text-blue-600" id="timer-display">00:00</div>
+      <p id="tracker-status" class="text-sm text-gray-500">Session is active for<span id="selected-app-name"></span>.</p>
+      <button id="end-session-btn" class="btn btn-danger w-full shadow-lg">
+        End Session
+      </button>
+    </div>
+
+    <div id="limit-reached-card" class="card space-y-6 text-center hidden">
+      <div class="flex flex-col items-center space-y-2">
+        <span class="text-5xl">😴</span>
+        <h1 class="text-3xl font-extrabold text-gray-900">Time Limit Reached!</h1>
+        <p class="text-lg text-gray-500">NoScroll / Sleep tight.</p>
+        <p class="text-sm text-gray-500">Your session has been automatically ended.</p>
+		<button id="pull-summary-btn-timelimit-reached" class="pull-summary-btn btn btn-primary w-full shadow-lg">
+        📊 Pull Last 3 Days Summary
+        </button>       
+      </div>
+    </div>
+	
+	
+	<div id="session-summary-card" class="card space-y-6 text-center hidden">
+      <div class="flex flex-col items-center space-y-2">
+        <span class="text-5xl">😊</span>
+        <h1 class="text-3xl font-extrabold text-gray-900">Great Job!</h1>
+        <p class="text-lg text-gray-500">Here’s your session summary:</p>
+      </div>
+      <div class="text-md text-gray-700 space-y-2">
+        <p><strong>Time Limit:</strong> <span id="summary-limit"></span> minutes</p>
+        <p><strong>Time Spent:</strong> <span id="summary-spent"></span> minutes</p>
+      </div>
+      <p class="text-green-600 font-semibold">👏 Keep it up! You're building healthy habits.</p>
+    </div>
+
+  </div>
+  
+  
+  <script type="module">
+  import { AppLauncher } from '@capacitor/app-launcher';
+  window.AppLauncher = AppLauncher;
+</script>
+
+<script>
+  const { LocalNotifications } = Capacitor.Plugins;
+  window.LocalNotifications = LocalNotifications;
+  
+  // ✅ Create notification channel (Android requirement)
+  LocalNotifications.createChannel({
+  id: "alarm", // use a new channel ID to avoid cached settings
+  name: "Alarm Notifications",
+  description: "Notifications that appear as heads-up alerts",
+  importance: 5, // HIGH priority
+  sound: "alarm",
+  vibration: true,
+  visibility: "public",
+  lights: true
+});
+
+
+  // ✅ Ask permission only AFTER plugin is available
+  async function requestNotifPermission() {
+    const result = await LocalNotifications.requestPermissions();
+    if (result.display === 'granted') {
+      console.log("✅ Notifications allowed");
+    } else {
+      console.log("❌ Notifications blocked");
+    }
+  }
+  requestNotifPermission();
+</script>
+
+  <script>
+  
+   // Get base API URL (ngrok or localhost)
+   // NOTE: Using a static value here for simplicity based on your file
+   const API_BASE_URL = "https://noscrollapplication.onrender.com";
+   console.log("Using API:", API_BASE_URL);
+  
+  const messages = [
+    "👏 Keep it up! You're building healthy habits.",
+    "🌟 Awesome! Stay consistent and you’ll see results.",
+    "🔥 Great discipline today!",
+    "💪 Strong work! Balance is everything."
+  ];
+
+  function getRandomMessage() {
+    return messages[Math.floor(Math.random() * messages.length)];
+  }
+  
+    // =======================================================
+    // 🌐 GLOBAL STATE AND UI ELEMENTS (CRITICAL FIX APPLIED)
+    // =======================================================
+    const setupCard = document.getElementById('setup-card');
+    const timeLimitCard = document.getElementById('time-limit-card');
+    const trackerCard = document.getElementById('tracker-card');
+    const limitReachedCard = document.getElementById('limit-reached-card');
+    const loadingOverlay = document.getElementById('loading-overlay');
+    const messageBox = document.getElementById('message-box');
+
+    const setupForm = document.getElementById('setup-form');
+    const userTypeRadios = document.getElementsByName('userType');
+    const parentFieldsDiv = document.getElementById('parent-fields');
+    
+    // 🚨 CRITICAL FIX: These must be looked up globally for timer functions 
+    // to access them without error.
+    const timeLimitInput = document.getElementById('timeLimit');
+    const timerDisplay = document.getElementById('timer-display');
+    const startSessionBtn = document.getElementById('start-session-btn');
+    const endSessionBtn = document.getElementById('end-session-btn');
+	const socialAppSelect = document.getElementById('socialApp');
+
+    let startTime;
+    let timerInterval;
+	
+	
+    // --- Message Box Function ---
+    function showAlert(message, type = 'success') {
+      if (!messageBox) {
+        alert(message); // fallback
+        return;
+      }
+      messageBox.textContent = message;
+      messageBox.className = 'message-box show ' + type;
+      setTimeout(() => messageBox.classList.remove('show'), 2500);
+    }
+
+    // --- Show Page Function ---
+    function showPage(pageId) {
+      const pages = [setupCard, timeLimitCard, trackerCard, limitReachedCard, document.getElementById('session-summary-card')];
+      
+      // Show motivational message if showing session summary
+      if (pageId === 'session-summary-card') {
+        const msgEl = document.querySelector('#session-summary-card p.text-green-600');
+        if (msgEl) msgEl.textContent = getRandomMessage();
+      }
+
+      pages.forEach(page => {
+        if (page.id === pageId) {
+          page.classList.remove('hidden');
+        } else {
+          page.classList.add('hidden');
+        }
+      });
+    }
+
+    // --- API Call: Log Usage ---
+    async function logUsage(timeLimit, timeSpentInSeconds) {
+      loadingOverlay.classList.remove('hidden');
+      const customerId = localStorage.getItem('customerId');
+      
+      const payload = {
+        action: "log_and_set_time",
+        customerId: customerId,
+        socialMediaApp: localStorage.getItem('selectedApp'), // Assuming the app name is static for simplicity
+        timeLimit: timeLimit,
+        timeSpent: timeSpentInSeconds,
+        usageDate: new Date().toISOString().split('T')[0] // 'YYYY-MM-DD'
+      };
+    
+      try {
+        const res = await fetch(API_BASE_URL + "/api/log-usage", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload),
+        });
+        const result = await res.json();
+    
+        if (res.ok && result.status === "success") {
+          showAlert('✅ Session ended. Usage log and time setting saved!', 'success');
+        } else {
+          showAlert(`❌ Error logging usage: ${result.message || 'Something went wrong'}`, 'error');
+        }
+      } catch (err) {
+        showAlert("❌ Network or API error during logging.", 'error');
+        console.error('Error logging usage:', err);
+      } finally {
+        loadingOverlay.classList.add('hidden');
+      }
+    }
+    
+    // Main End Session Logic
+    function endSession(isAutoEnd) {
+      clearInterval(timerInterval);
+      const endTime = Date.now();
+      // Use global startTime and timeLimitInput
+      const elapsedTimeInSeconds = Math.floor((endTime - startTime) / 1000);
+      const timeLimitInMinutes = parseInt(timeLimitInput.value);
+      const timeSpentInMinutes = Math.ceil(elapsedTimeInSeconds / 60);
+
+      // Log the usage
+      logUsage(timeLimitInMinutes, elapsedTimeInSeconds);
+
+      // Show correct card
+      if (isAutoEnd) {
+        showPage('limit-reached-card');
+      } else {
+        document.getElementById('summary-limit').textContent = timeLimitInMinutes;
+        document.getElementById('summary-spent').textContent = timeSpentInMinutes;
+        showPage('session-summary-card');
+      }
+    }
+	
+	// --- Instagram Launcher ---
+    async function openApp(appName) {
+  // URLs for app + browser fallback
+  const APP_URLS = {
+    Instagram: { app: 'instagram://user?username=_', web: 'https://www.instagram.com/' },
+    Facebook:  { app: 'fb://', web: 'https://www.facebook.com/' },
+    YouTube:   { app: 'youtube://', web: 'https://www.youtube.com/' }
+  };
+
+  const urls = APP_URLS[appName] || APP_URLS["Instagram"];
+
+  try {
+    const canOpen = await window.AppLauncher.canOpenUrl({ url: urls.app });
+
+    if (canOpen.value) {
+      await window.AppLauncher.openUrl({ url: urls.app });
+    } else {
+      window.open(urls.web, '_blank');
+    }
+  } catch (e) {
+    console.error(`${appName} AppLauncher error, falling back to browser:`, e);
+    window.open(urls.web, '_blank');
+  }
+}
+   
+    // 🔹 Chart rendering
+    let summaryChart;
+    function renderSummaryChart(data, canvasElement) {
+      const ctx = canvasElement.getContext('2d');
+
+      const labels = data.map(d => d.date);
+      const limits = data.map(d => d.timeLimit);
+      const spent = data.map(d => d.timeSpent);
+
+      const spentColors = spent.map((s, i) =>
+        s > limits[i] ? "rgba(239,68,68,0.9)" : "rgba(16,185,129,0.9)"
+      );
+
+      if (canvasElement.chart) {
+        canvasElement.chart.destroy();
+      }
+
+      canvasElement.chart = new Chart(ctx, {
+        type: 'bar',
+        data: {
+          labels: labels,
+          datasets: [
+            { label: "Time Limit", data: limits, backgroundColor: "rgba(59,130,246,0.7)" },
+            { label: "Time Spent", data: spent, backgroundColor: spentColors }
+          ]
+        },
+        options: { responsive: true, plugins: { legend: { position: "bottom" } } }
+      });
+
+      const storyDiv = document.createElement("div");
+      storyDiv.className = "mt-3 text-sm text-gray-700 space-y-1";
+
+      let within = 0, over = 0;
+      data.forEach((d, i) => {
+        let line = `Date(${d.date}): Limit ${d.timeLimit} mins, Spent ${d.timeSpent} mins → `;
+        if (d.timeSpent > d.timeLimit) {
+          line += `❌ Overused by ${d.timeSpent - d.timeLimit} mins`;
+          over++;
+        } else {
+          line += `✅ Within limit`;
+          within++;
+        }
+        const p = document.createElement("p");
+        p.textContent = line;
+        storyDiv.appendChild(p);
+      });
+
+      const summary = document.createElement("p");
+      summary.className = "font-semibold mt-2";
+      summary.textContent = `Summary: ${within} days within limit, ${over} days overused`;
+      storyDiv.appendChild(summary);
+
+      const summaryCard = canvasElement.closest('.summary-card');
+      const oldStory = summaryCard.querySelector("#usage-story");
+      if (oldStory) oldStory.remove();
+      storyDiv.id = "usage-story";
+      summaryCard.appendChild(storyDiv);
+    }
+   
+    // =======================================================
+    // ⚙️ MAIN APP INITIALIZATION AND EVENT LISTENERS
+    // =======================================================
+
+    window.onload = async function() {
+      const customerId = localStorage.getItem('customerId');
+      const storedEmail = localStorage.getItem("email");
+
+      loadingOverlay.classList.remove('hidden');
+
+      if (customerId) {
+        // Existing user: Check daily usage
+        try {
+          const res = await fetch(API_BASE_URL + "/api/log-usage", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ action: "check_usage", customerId: customerId }),
+          });
+          const result = await res.json();
+          if (res.ok && result.salesforce_response.usedToday) {
+            showAlert('😴 You have reached your daily time limit.', 'success');
+            showPage('limit-reached-card');
+          } else {
+            showAlert('👋 Welcome back! Please set your new time limit.', 'success');
+            showPage('time-limit-card');
+          }
+        } catch (err) {
+          showAlert("❌ Network or API error during usage check.", 'error');
+          showPage('time-limit-card'); // Fallback to allow use
+        }
+      } else if (storedEmail) {
+        // New user but has stored email: Try to recover customerId
+        try {
+          const res = await fetch(API_BASE_URL + "/api/log-usage", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ action: "get_customer_by_email", email: storedEmail }),
+          });
+          const result = await res.json();
+          if (res.ok && result.status === "success" && result.salesforce_response) {
+            localStorage.setItem("customerId", result.salesforce_response.customerId);
+            showPage("time-limit-card");
+          } else {
+            showPage('setup-card');
+          }
+        } catch (err) {
+          console.error("❌ Error during email recovery", err);
+          showPage('setup-card');
+        }
+      } else {
+        showPage('setup-card'); 
+      }
+	
+      loadingOverlay.classList.add('hidden');
+    };
+
+
+    // --- Setup Form Submission (DOMContentLoad needed for this) ---
+    document.addEventListener("DOMContentLoaded", () => {
+      // Parent/Individual radio button logic
+      userTypeRadios.forEach(radio => {
+        radio.addEventListener('change', (event) => {
+          if (event.target.value === 'Parent') {
+            parentFieldsDiv.classList.remove('hidden');
+          } else {
+            parentFieldsDiv.classList.add('hidden');
+          }
+        });
+      });
+
+      setupForm.addEventListener("submit", async (e) => {
+        e.preventDefault(); 
+        loadingOverlay.classList.remove("hidden");
+
+        const formData = new FormData(setupForm);
+        const payload = {
+          action: "setup",
+          customerName: formData.get("customerName"),
+          email: formData.get("email"),
+          age: parseInt(formData.get("age")),
+          userType: formData.get("userType"),
+          
+        };
+
+        if (payload.userType === "Parent") {
+          payload.childName = formData.get("childName");
+          payload.childEmail = formData.get("childEmail");
+        }
+
+        try {
+          const res = await fetch(API_BASE_URL + "/api/log-usage", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(payload),
+          });
+
+          const result = await res.json();
+
+          if (res.ok && result.status === "success") {
+            const newCustomerId = result.salesforce_response.customerId;
+            const userEmail = result.salesforce_response.email;
+            localStorage.setItem("customerId", newCustomerId);
+            localStorage.setItem("email", userEmail);
+            showAlert("✅ Profile created successfully!", "success");
+            setTimeout(() => showPage("time-limit-card"), 500);
+          } else {
+            showAlert(`❌ ${result.message || "Something went wrong"}`, "error");
+          }
+        } catch (err) {
+          showAlert("❌ Network or server error", "error");
+          console.error(err);
+        } finally {
+          loadingOverlay.classList.add("hidden");
+        }
+      });
+    });
+	
+	
+	// Helper function to schedule the notification
+async function scheduleOneMinuteWarning() {
+    try {
+        await window.LocalNotifications.schedule({
+            notifications: [{
+                id: 1,
+                title: "⏳ Time almost up!",
+                body: "Only 1 minute left in your NoScroll session!",
+                schedule: { at: new Date(Date.now() + 5000) }, // ✅ Use 5s delay for better testing (see note below)
+                sound: "default",
+				channelId: "alarm", // match the new channel
+                sound: "alarm",
+                vibrate: true
+            }]
+        });
+        console.log("✅ 1-minute warning successfully scheduled!");
+    } catch (e) {
+        console.error("❌ Failed to schedule notification:", e);
+    }
+}
+
+   let currentSelectedApp = null;
+ 
+    // 🚀 START SESSION BUTTON LISTENER (CRITICAL FIX: MOVED OUT OF SHOWPAGE)
+    startSessionBtn.addEventListener('click', async () => {
+      const timeLimitInMinutes = parseInt(timeLimitInput.value);
+	  const selectedApp = socialAppSelect.value; // Instagram / Facebook / YouTube
+	  localStorage.setItem('selectedApp', selectedApp); // optional persistence
+      currentSelectedApp = selectedApp; // <-- store for this session
+	  
+	  console.log("selected APP",currentSelectedApp);
+	  // ✅ Show selected app in session tracker
+  document.getElementById('selected-app-name').textContent = selectedApp;
+      if (isNaN(timeLimitInMinutes) || timeLimitInMinutes <= 0) {
+        alert('Please enter a valid time limit.');
+        return;
+      }
+
+      showPage('tracker-card');
+	  
+	  // ✅ Reset pause tracking for new session
+  pausedSeconds = 0;
+      
+      // Use/Set global variables
+      startTime = Date.now();
+      const timeLimitInSeconds = timeLimitInMinutes * 60;
+      let notifScheduled = false;
+
+      // Clear any previous interval before starting a new one
+      clearInterval(timerInterval); 
+      
+      timerInterval = setInterval(() => {
+
+  // ✅ Run timer only if NOT paused
+  if (!isPaused) {
+
+    const elapsedTime = Math.floor((Date.now() - startTime) / 1000) + pausedSeconds;
+    const remaining = timeLimitInSeconds - elapsedTime;
+
+    const minutes = Math.floor(remaining / 60);
+    const seconds = remaining % 60;
+
+    if (timerDisplay) {
+      timerDisplay.textContent = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+    }
+
+    if (remaining <= 0) {
+      clearInterval(timerInterval);
+      endSession(true);
+    }
+
+    // ✅ Safer 1-minute warning notification
+if (remaining <= 60 && remaining > 0 && !notifScheduled) {
+  notifScheduled = true;
+
+  if (window.LocalNotifications) {
+        scheduleOneMinuteWarning(); // <-- Call the async function
+    } else {
+        console.warn("⚠️ LocalNotifications object is missing.");
+    }
+}
+
+  }
+
+}, 1000);
+
+
+      try {
+        await openApp(selectedApp);
+      } catch (e) {
+        console.error("Instagram launch failed:", e);
+      }
+    });
+
+
+    // End Session Button
+    endSessionBtn.addEventListener('click', () => {
+      endSession(false); // Manually end session
+    });
+    
+    // Summary Button Logic (Attached to all .pull-summary-btn)
+    document.querySelectorAll('.pull-summary-btn').forEach(btn => {
+      btn.addEventListener('click', async () => {
+        const customerId = localStorage.getItem('customerId');
+        if (!customerId) {
+          showAlert("❌ No customer found. Please setup profile first.", "error");
+          return;
+        }
+
+        loadingOverlay.classList.remove('hidden');
+        try {
+          const res = await fetch(API_BASE_URL + "/api/log-usage", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ action: "get_summary", customerId: customerId, days: 3 }),
+          });
+
+          const result = await res.json();
+
+          if (res.ok && result.status === "success") {
+            const sfResp = result.salesforce_response;
+            if (sfResp && sfResp.status === "success" && sfResp.data && sfResp.data.length > 0) {
+              
+              const template = document.getElementById('summary-template');
+              const clone = template.content.cloneNode(true);
+              const summaryCard = clone.querySelector('.summary-card');
+              const chartCanvas = clone.querySelector('.summary-chart');
+              
+              btn.insertAdjacentElement('afterend', summaryCard);
+
+              renderSummaryChart(sfResp.data, chartCanvas);
+
+              summaryCard.querySelector('.close-summary').addEventListener('click', () => {
+                summaryCard.remove();
+              });
+
+            } else {
+              showAlert("ℹ️ No summary data available.", "success");
+            }
+          } else {
+            showAlert("❌ Could not fetch summary", "error");
+          }
+        } catch (err) {
+          console.error(err);
+          showAlert("❌ Network or server error", "error");
+        } finally {
+          loadingOverlay.classList.add('hidden');
+        }
+      });
+    });
+
+
+
+// --- App State Change: Pause/Resume Tracker ---
+let isPaused = false;
+let pauseStart = null;
+let pausedSeconds = 0;
+
+if (window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.App) {
+  const { App } = window.Capacitor.Plugins;
+
+  App.addListener('appStateChange', ({ isActive }) => {
+    if (isActive) {
+      // ✅ App is foregrounded → PAUSE the timer
+      isPaused = true;
+      pauseStart = Date.now();
+      document.getElementById('tracker-status').textContent = `⏸️ Session is paused for ${currentSelectedApp}.`; // Correct with backticks
+    } else {
+      // ✅ App is backgrounded → RESUME the timer
+      if (pauseStart) {
+        pausedSeconds += Math.floor((Date.now() - pauseStart) / 1000);
+        pauseStart = null;
+      }
+      isPaused = false;
+      document.getElementById('tracker-status').textContent = "▶️ Session running in background.";
+    }
+  });
+}
+
+</script>
+</body>
+</html>
